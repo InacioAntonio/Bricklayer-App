@@ -25,7 +25,7 @@ class RealtimeService {
         .where('nome', isEqualTo: obra.nome)
         .get()
         .then((value) {
-      value.docs.forEach((element) {
+      for (var element in value.docs) {
         Map<String, dynamic> updates = {
           'datainicio': obra.dataInicio,
           'datafim': obra.dataFim,
@@ -40,7 +40,7 @@ class RealtimeService {
           }).toList(),
         };
         element.reference.update(updates);
-      });
+      }
     });
   }
 
@@ -50,9 +50,9 @@ class RealtimeService {
         .where('nome', isEqualTo: nome)
         .get()
         .then((value) {
-      value.docs.forEach((element) {
+      for (var element in value.docs) {
         element.reference.delete();
-      });
+      }
     });
   }
 }

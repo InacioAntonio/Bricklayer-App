@@ -7,12 +7,13 @@ class ConfigureProviders {
   late final List<SingleChildWidget> providers;
   ConfigureProviders({required this.providers});
   static Future<ConfigureProviders> createDependencyTree() async {
-    final realtime_service = RealtimeService();
+    final realtimeService = RealtimeService();
+    final authService = AuthService();
     //final notification_service = NotificationService(topic: "alerta");
 
     return ConfigureProviders(providers: [
-      Provider<RealtimeService>.value(value: realtime_service),
-      Provider<AuthService>.value(value: AuthService()),
+      Provider<RealtimeService>.value(value: realtimeService),
+      Provider<AuthService>.value(value: authService),
       //Provider<NotificationService>.value(value: notification_service),
     ]);
   }
