@@ -1,5 +1,9 @@
+import 'package:bricklayer_app/services/auth_service.dart';
+import 'package:bricklayer_app/ui/pages/home_page.dart';
+import 'package:bricklayer_app/ui/pages/login_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:provider/provider.dart';
 
 class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   @override
@@ -9,6 +13,7 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
 
   @override
   Widget build(BuildContext context) {
+    final authService = Provider.of<AuthService>(context, listen: false);
     return AppBar(
       backgroundColor: Colors.orange[800],
       title: Text(
@@ -31,7 +36,12 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
         PopupMenuButton<String>(
           onSelected: (value) {
             if (value == 'sair') {
-              SystemNavigator.pop(); // Fecha o app
+              authService.signOut();
+              // Navega de volta para a tela de login
+              Navigator.of(context).pushReplacement(
+                  MaterialPageRoute(builder: (context) => LoginPage()));
+            } else if (value == 'sair_do_app') {
+              SystemNavigator.pop();
             }
           },
           icon: Icon(Icons.more_vert, color: Colors.white),
@@ -40,6 +50,10 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
               PopupMenuItem<String>(
                 value: 'sair',
                 child: Text('Sair'),
+              ),
+              PopupMenuItem<String>(
+                value: 'sair_do_app',
+                child: Text('Sair do App'),
               ),
             ];
           },

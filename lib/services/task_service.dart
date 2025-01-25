@@ -3,7 +3,7 @@ import 'dart:convert';
 import 'package:bricklayer_app/domain/Tarefas.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-class TaskManager {
+class TaskManagerService {
   static const String _taskListKey = 'taskListKey';
 
   // Adicionar uma nova tarefa

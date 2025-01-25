@@ -1,3 +1,4 @@
+import 'package:bricklayer_app/domain/Insumos.dart';
 import 'package:bricklayer_app/domain/Obras.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
@@ -16,6 +17,7 @@ class RealtimeService {
         };
       }).toList(),
       'descricao': obra.descricao,
+      'valorTotal': obra.valorTotal,
     });
   }
 
@@ -54,5 +56,25 @@ class RealtimeService {
         element.reference.delete();
       }
     });
+  }
+
+  Future<List<Obras>> listarObras() async {
+    QuerySnapshot querySnapshot = await database.collection('obras').get();
+    return querySnapshot.docs.map((doc) {
+      return Obras(
+        nome: doc['nome'],
+        dataInicio: (doc['datainicio'] as Timestamp).toDate(),
+        dataFim: (doc['datafim'] as Timestamp).toDate(),
+        descricao: doc['descricao'],
+        insumos: (doc['Lista_insumos'] as List).map((insumo) {
+          return Insumos(
+            nome: insumo['nome'],
+            valor: insumo['valor'],
+            quantidade: insumo['quantidade'],
+          );
+        }).toList(),
+        valorTotal: doc['valorTotal'],
+      );
+    }).toList();
   }
 }
