@@ -15,6 +15,7 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   late Future<List<Obras>> _obrasFuture;
+  late final obraService = Provider.of<RealtimeService>(context, listen: false);
   @override
   void initState() {
     super.initState();
@@ -78,14 +79,43 @@ class _MyHomePageState extends State<MyHomePage> {
                             title:
                                 Text(obra.nome, style: TextStyle(fontSize: 16)),
                             subtitle: Text(obra.descricao),
-                            trailing: Icon(Icons.arrow_forward_ios),
-                            onTap: () => Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) =>
-                                    ObraDetailScreen(obra: obra),
+                            trailing:
+                                Row(mainAxisSize: MainAxisSize.min, children: [
+                              IconButton(
+                                icon: Icon(Icons.arrow_forward_ios),
+                                onPressed: () => Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) =>
+                                        ObraDetailScreen(obra: obra),
+                                  ),
+                                ),
                               ),
-                            ),
+                              IconButton(
+                                icon: Icon(Icons.delete, color: Colors.red),
+                                onPressed: () {
+                                  setState(() {
+                                    obras.removeAt(index);
+                                    obraService.deleteObra(obra.nome);
+                                  });
+                                },
+                              ),
+                              IconButton(
+                                icon: Icon(
+                                  Icons.edit,
+                                  color: Colors.blue,
+                                ),
+                                onPressed: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) =>
+                                          CadastroObrasScreen(obra: obra),
+                                    ),
+                                  );
+                                },
+                              )
+                            ]),
                           ),
                         );
                       },

@@ -1,6 +1,5 @@
-import 'dart:convert';
 import 'package:bricklayer_app/domain/Insumos.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:bricklayer_app/domain/Obras.dart';
 import 'package:intl/intl.dart';
 
 class Tarefa {
@@ -10,12 +9,15 @@ class Tarefa {
   late DateTime dataFim; // Usando DateTime
   late bool concluido;
   late List<Insumos> insumos;
+  late String
+      obra; // Toda tarefa está associada a somente uma Obra mas a Obra pode ter Uma lista de Tarefas
   Tarefa({
     required this.nome,
     required this.descricao,
     required this.dataInicio,
     required this.dataFim,
     required this.insumos,
+    required this.obra,
     this.concluido = false,
   });
   // Método para formatar a data de início como string
@@ -43,6 +45,7 @@ class Tarefa {
         };
       }).toList(),
       'concluido': concluido,
+      'obra': obra,
     };
   }
 
@@ -62,6 +65,7 @@ class Tarefa {
           );
         }),
       ),
+      obra: map['obra'],
       concluido: map['concluido'],
     );
   }

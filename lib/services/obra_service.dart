@@ -18,6 +18,10 @@ class RealtimeService {
       }).toList(),
       'descricao': obra.descricao,
       'valorTotal': obra.valorTotal,
+      'tarefas': obra.tarefas?.map((tarefa) {
+        return tarefa.toMap();
+      }).toList(),
+      'valorMaoDeObra': obra.valorMaoDeObra,
     });
   }
 
@@ -40,6 +44,10 @@ class RealtimeService {
               'quantidade': insumo.quantidade,
             };
           }).toList(),
+          'tarefas': obra.tarefas?.map((tarefa) {
+            return tarefa.toMap();
+          }).toList(),
+          'valorMaoDeObra': obra.valorMaoDeObra,
         };
         element.reference.update(updates);
       }
@@ -74,6 +82,7 @@ class RealtimeService {
           );
         }).toList(),
         valorTotal: doc['valorTotal'],
+        valorMaoDeObra: doc['valorMaoDeObra'],
       );
     }).toList();
   }

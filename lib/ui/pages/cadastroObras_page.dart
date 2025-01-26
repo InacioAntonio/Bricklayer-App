@@ -8,6 +8,8 @@ import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
 class CadastroObrasScreen extends StatefulWidget {
+  Obras? obra;
+  CadastroObrasScreen({this.obra});
   @override
   _CadastroObrasScreenState createState() => _CadastroObrasScreenState();
 }
@@ -22,6 +24,21 @@ class _CadastroObrasScreenState extends State<CadastroObrasScreen> {
   int _novoInsumoQuantidade = 0;
   DateTime? _dataInicio;
   DateTime? _dataFim;
+  double _ValorMaoDeObra = 0.0;
+  get realtimeService => Provider.of<RealtimeService>(context, listen: false);
+  @override
+  void initState() {
+    super.initState();
+    if (widget.obra != null) {
+      _nomeController.text = widget.obra!.nome;
+      _descricaoController.text = widget.obra!.descricao;
+      _dataInicio = widget.obra!.dataInicio;
+      _dataFim = widget.obra!.dataFim;
+      _insumos.addAll(widget.obra!.insumos);
+      _valorTotal = widget.obra!.valorTotal;
+      _ValorMaoDeObra = widget.obra!.valorMaoDeObra;
+    }
+  }
 
   void _adicionarInsumo() {
     print('Adicionando insumo: $_novoInsumoNome');
@@ -41,6 +58,7 @@ class _CadastroObrasScreenState extends State<CadastroObrasScreen> {
           quantidade: _novoInsumoQuantidade,
         ),
       );
+      _valorTotal = 0.0;
       for (var insumo in _insumos) {
         _valorTotal += insumo.valor * insumo.quantidade;
       }
@@ -72,6 +90,7 @@ class _CadastroObrasScreenState extends State<CadastroObrasScreen> {
           quantidade: _novoInsumoQuantidade,
         ),
       );
+      _valorTotal = 0.0;
       for (var insumo in _insumos) {
         _valorTotal += insumo.valor * insumo.quantidade;
       }
@@ -144,13 +163,12 @@ class _CadastroObrasScreenState extends State<CadastroObrasScreen> {
       );
       return;
     }
-    if (_insumos == null) {
+    if (_insumos.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Adicione pelo menos um insumo!')),
       );
       return;
     }
-    print(_valorTotal);
     Obras novaObra = Obras(
       nome: _nomeController.text,
       dataInicio: _dataInicio!,
@@ -158,20 +176,22 @@ class _CadastroObrasScreenState extends State<CadastroObrasScreen> {
       descricao: _descricaoController.text,
       insumos: _insumos,
       valorTotal: _valorTotal,
+      valorMaoDeObra: _ValorMaoDeObra,
     );
-
-    // Recupera o serviço do Provider
-    final realtimeService =
-        Provider.of<RealtimeService>(context, listen: false);
-
-    // Envia os dados para o serviço
     try {
-      realtimeService.cadastrarObra(novaObra);
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-            content: Text('Obra "${novaObra.nome}" cadastrada com sucesso!')),
-      );
+      if (widget.obra != null) {
+        realtimeService.updateObra(novaObra);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+              content: Text('Obra "${novaObra.nome}" atualizada com sucesso!')),
+        );
+      } else {
+        realtimeService.cadastrarObra(novaObra);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+              content: Text('Obra "${novaObra.nome}" cadastrada com sucesso!')),
+        );
+      }
 
       // Limpar os campos após o cadastro
       setState(() {
@@ -220,6 +240,24 @@ class _CadastroObrasScreenState extends State<CadastroObrasScreen> {
                 ),
               ),
               SizedBox(height: 16),
+              TextField(
+                controller:
+                    TextEditingController(text: _ValorMaoDeObra.toString()),
+                decoration: InputDecoration(
+                  labelText: 'Valor da Mão de Obra',
+                  border: OutlineInputBorder(),
+                ),
+                onChanged: (value) {
+                  setState(() {
+                    _ValorMaoDeObra = double.tryParse(value) ?? 0.0;
+                    _valorTotal = 0.0;
+                    for (var insumo in _insumos) {
+                      _valorTotal += insumo.valor * insumo.quantidade;
+                    }
+                    _valorTotal += _ValorMaoDeObra;
+                  });
+                },
+              ),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -278,6 +316,11 @@ class _CadastroObrasScreenState extends State<CadastroObrasScreen> {
                       onPressed: () {
                         setState(() {
                           _insumos.remove(insumo);
+                          _valorTotal = 0.0;
+                          for (var insumo in _insumos) {
+                            _valorTotal += insumo.valor * insumo.quantidade;
+                          }
+                          _valorTotal += _ValorMaoDeObra;
                         });
                       },
                     ),
