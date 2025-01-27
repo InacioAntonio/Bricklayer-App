@@ -35,9 +35,16 @@ class _AdicionarInsumoModalState extends State<AdicionarInsumoModal> {
   }
 
   @override
+  @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(16.0),
+    return SingleChildScrollView(
+      padding: EdgeInsets.only(
+        left: 16.0,
+        right: 16.0,
+        top: 16.0,
+        bottom: MediaQuery.of(context).viewInsets.bottom +
+            16.0, // Adapta o padding inferior ao teclado
+      ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -45,17 +52,19 @@ class _AdicionarInsumoModalState extends State<AdicionarInsumoModal> {
             controller: _nomeController,
             decoration: InputDecoration(labelText: 'Nome do Insumo'),
           ),
+          SizedBox(height: 16),
           TextField(
             controller: _valorController,
             decoration: InputDecoration(labelText: 'Valor do Insumo'),
             keyboardType: TextInputType.number,
           ),
+          SizedBox(height: 16),
           TextField(
             controller: _quantidadeController,
             decoration: InputDecoration(labelText: 'Quantidade'),
             keyboardType: TextInputType.number,
           ),
-          SizedBox(height: 16),
+          SizedBox(height: 24),
           ElevatedButton(
             onPressed: () {
               String nome = _nomeController.text;
