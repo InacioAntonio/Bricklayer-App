@@ -11,7 +11,7 @@ class Obras {
   List<Insumos> insumos = [];
   List<Tarefa>? tarefas = [];
   double valorTotal = 0;
-  double valorMaoDeObra = 0;
+  double? valorMaoDeObra = 0;
   Obras({
     required this.nome,
     required this.dataInicio,
@@ -19,7 +19,7 @@ class Obras {
     required this.insumos,
     required this.valorTotal,
     required this.descricao,
-    required this.valorMaoDeObra,
+    this.valorMaoDeObra,
     this.tarefas,
   });
   // Método para formatar a data de início como string
@@ -50,6 +50,7 @@ class Obras {
       'tarefas': tarefas?.map((tarefa) {
         return tarefa.toMap();
       }).toList(),
+      'valorMaoDeObra': valorMaoDeObra,
     };
   }
 }
