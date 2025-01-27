@@ -23,15 +23,7 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
           color: Colors.white,
         ),
       ),
-      leading: Builder(
-        builder: (context) => IconButton(
-          icon: Icon(Icons.menu, color: Colors.white),
-          iconSize: 28,
-          onPressed: () {
-            Scaffold.of(context).openDrawer(); // Abre o Drawer
-          },
-        ),
-      ),
+      leading: Container(),
       actions: [
         PopupMenuButton<String>(
           onSelected: (value) {

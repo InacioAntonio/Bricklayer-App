@@ -1,3 +1,4 @@
+import 'package:bricklayer_app/services/auth_service.dart';
 import 'package:bricklayer_app/services/obra_service.dart';
 import 'package:bricklayer_app/ui/pages/cadastroObras_page.dart';
 import 'package:bricklayer_app/ui/pages/detalhes_da_obra_page.dart';
@@ -15,14 +16,40 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   late Future<List<Obras>> _obrasFuture;
-  late final obraService = Provider.of<RealtimeService>(context, listen: false);
+  late RealtimeService obraService;
+  late AuthService authService;
+
   @override
   void initState() {
     super.initState();
-    _obrasFuture =
-        Provider.of<RealtimeService>(context, listen: false).listarObras();
   }
 
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Garantindo que os serviços sejam obtidos corretamente
+    obraService = Provider.of<RealtimeService>(context);
+    authService = Provider.of<AuthService>(context);
+  }
+
+// A função assíncrona para listar as obras
+  Future<List<Obras>> _ListarObras() async {
+    try {
+      // Verificando se o widget ainda está montado antes de atualizar o estado
+      if (mounted) {
+        setState(() {
+          _obrasFuture = obraService.listarObras();
+        });
+        return await obraService.listarObras();
+      }
+    } catch (e) {
+      print('Erro ao carregar as obras: $e');
+      return []; // Retorna uma lista vazia em caso de erro
+    }
+    return []; // Retorna uma lista vazia caso o widget não esteja mais montado
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: CustomAppBar(),
@@ -51,18 +78,25 @@ class _MyHomePageState extends State<MyHomePage> {
               ),
               child: Text(
                 'Cadastrar Obra',
-                style: TextStyle(fontSize: 16),
+                style: TextStyle(fontSize: 16, color: Colors.white),
               ),
             ),
             SizedBox(height: 20),
             Expanded(
               child: FutureBuilder<List<Obras>>(
-                future: _obrasFuture,
+                future: _ListarObras(),
                 builder: (context, snapshot) {
                   if (snapshot.connectionState == ConnectionState.waiting) {
                     return CircularProgressIndicator();
                   } else if (snapshot.hasError) {
-                    return Text('Erro: ${snapshot.error}');
+                    if (snapshot.error
+                        .toString()
+                        .contains('permission-denied')) {
+                      return Text(
+                          'Você não tem obras cadastradas nessa conta.');
+                    }
+                    return Text(
+                        'Houve um erro ao carregar as obras.${snapshot.error}');
                   } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
                     return Text('Nenhuma obra disponível.');
                   } else {

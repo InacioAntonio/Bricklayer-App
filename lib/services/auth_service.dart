@@ -1,13 +1,24 @@
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart';
 
-class AuthService {
+class AuthService extends ChangeNotifier {
   final FirebaseAuth _firebaseAuth = FirebaseAuth.instance;
+  AuthService() {
+    _firebaseAuth.authStateChanges().listen((user) {
+      notifyListeners(); // Notifica a UI sobre alterações de estado
+    });
+  }
+  Stream<User?> observeChanges() {
+    return _firebaseAuth.authStateChanges();
+  }
 
   Future<UserCredential> signUpWithEmailAndPassword(
       String email, String password) async {
     try {
       UserCredential credential = await _firebaseAuth
           .createUserWithEmailAndPassword(email: email, password: password);
+      notifyListeners();
+      print('User created: ${credential.user!.email}');
       return credential;
     } on FirebaseAuthException catch (e) {
       throw Exception(e.message);
@@ -19,6 +30,9 @@ class AuthService {
     try {
       UserCredential credential = await _firebaseAuth
           .signInWithEmailAndPassword(email: email, password: password);
+      print('User signed in: ${credential.user!.email}');
+      notifyListeners();
+
       return credential;
     } on FirebaseAuthException catch (e) {
       throw Exception(e.message);
@@ -34,6 +48,8 @@ class AuthService {
   }
 
   Future<void> signOut() async {
+    notifyListeners();
+    print('User signed out');
     return await _firebaseAuth.signOut();
   }
 
@@ -44,6 +60,7 @@ class AuthService {
   Future<void> deleteAccount() async {
     try {
       await _firebaseAuth.currentUser?.delete();
+      notifyListeners();
     } on FirebaseAuthException catch (e) {
       throw Exception(e.message);
     }

@@ -80,7 +80,8 @@ class _AdicionarInsumoModalState extends State<AdicionarInsumoModal> {
             },
             style:
                 ElevatedButton.styleFrom(backgroundColor: Colors.orange[800]),
-            child: Text('Adicionar Insumo'),
+            child: Text(
+                widget.insumo == null ? 'Adicionar Insumo' : 'Editar Insumo'),
           ),
         ],
       ),

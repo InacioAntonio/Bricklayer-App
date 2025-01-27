@@ -3,9 +3,8 @@ import 'package:bricklayer_app/domain/Obras.dart';
 import 'package:bricklayer_app/domain/Tarefas.dart';
 import 'package:bricklayer_app/services/obra_service.dart';
 import 'package:bricklayer_app/ui/pages/cadastroTarefas_page.dart';
+import 'package:bricklayer_app/ui/pages/relatorio_page.dart';
 import 'package:bricklayer_app/ui/widgets/insumos_modal.dart';
-import 'package:flutter/material.dart';
-
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -79,6 +78,25 @@ class _ObraDetailScreenState extends State<ObraDetailScreen> {
     }); // Atualiza após salvar alterações // Atualiza após salvar alterações
   }
 
+  void _adicionarInsumo() {
+    showModalBottomSheet(
+      context: context,
+      builder: (context) => AdicionarInsumoModal(
+        onAdicionarInsumo: (nome, valor, quantidade) {
+          setState(() {
+            widget.obra.insumos
+                .add(Insumos(nome: nome, valor: valor, quantidade: quantidade));
+          });
+        },
+      ),
+    ).then((_) {
+      setState(() {
+        Provider.of<RealtimeService>(context, listen: false)
+            .updateObra(widget.obra);
+      });
+    });
+  }
+
   void _deletarInsumo(Insumos insumo) {
     showDialog(
       context: context,
@@ -129,6 +147,8 @@ class _ObraDetailScreenState extends State<ObraDetailScreen> {
               Text('Data de Início: ${widget.obra.dataInicioFormatada}'),
               Text('Data de Fim: ${widget.obra.dataFimFormatada}'),
               Text('Descrição: ${widget.obra.descricao}'),
+              Text('Preço Total: R\$ ${widget.obra.valorTotal}'),
+              Text('Valor da Mão de Obra: R\$ ${widget.obra.valorMaoDeObra}'),
               Text(
                   'Quantidade Total de Insumos: ${widget.obra.insumos.length}'),
               SizedBox(height: 16),
@@ -215,6 +235,30 @@ class _ObraDetailScreenState extends State<ObraDetailScreen> {
                       backgroundColor: Colors.orange[800]),
                 ),
               ),
+              SizedBox(height: 16),
+              Center(
+                child: ElevatedButton(
+                    onPressed: () {
+                      _adicionarInsumo();
+                    },
+                    child: Text('Adicionar Insumo'),
+                    style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.orange[800])),
+              ),
+              SizedBox(height: 16),
+              Center(
+                child: ElevatedButton(
+                  onPressed: () {
+                    Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) => RelatorioGastosObra(
+                                  obra: widget.obra,
+                                )));
+                  },
+                  child: Text('Ver Relatório da Obra'),
+                ),
+              )
             ],
           ),
         ),

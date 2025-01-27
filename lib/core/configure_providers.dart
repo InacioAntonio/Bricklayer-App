@@ -16,7 +16,7 @@ class ConfigureProviders {
 
     return ConfigureProviders(providers: [
       Provider<RealtimeService>.value(value: realtimeService),
-      Provider<AuthService>.value(value: authService),
+      ChangeNotifierProvider<AuthService>.value(value: authService),
       Provider<TaskManagerService>.value(value: tarefaService),
       //Provider<NotificationService>.value(value: notification_service),
     ]);

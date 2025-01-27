@@ -1,5 +1,8 @@
 import 'package:bricklayer_app/core/configure_providers.dart';
+import 'package:bricklayer_app/services/auth_service.dart';
+import 'package:bricklayer_app/ui/pages/home_page.dart';
 import 'package:bricklayer_app/ui/pages/login_page.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:provider/provider.dart';
@@ -21,15 +24,33 @@ Future<void> main() async {
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
+
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Bricklayer App',
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
-      ),
-      home: const LoginPage(),
-      debugShowCheckedModeBanner: false,
+    final authService = Provider.of<AuthService>(context);
+
+    return StreamBuilder<User?>(
+      stream: authService.observeChanges(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return MaterialApp(
+            debugShowCheckedModeBanner: false,
+            home: Scaffold(
+              body: Center(child: CircularProgressIndicator()),
+            ),
+          );
+        } else if (snapshot.hasData) {
+          return MaterialApp(
+            debugShowCheckedModeBanner: false,
+            home: MyHomePage(),
+          );
+        } else {
+          return MaterialApp(
+            debugShowCheckedModeBanner: false,
+            home: LoginPage(),
+          );
+        }
+      },
     );
   }
 }

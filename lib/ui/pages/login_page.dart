@@ -3,10 +3,6 @@ import 'package:bricklayer_app/ui/pages/home_page.dart';
 import 'package:bricklayer_app/ui/pages/resetpassword_page.dart';
 import 'package:bricklayer_app/ui/pages/signup_page.dart';
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:provider/provider.dart';
-
-import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 class LoginPage extends StatefulWidget {
