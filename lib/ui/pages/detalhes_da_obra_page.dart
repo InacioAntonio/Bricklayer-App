@@ -3,6 +3,7 @@ import 'package:bricklayer_app/domain/Obras.dart';
 import 'package:bricklayer_app/domain/Tarefas.dart';
 import 'package:bricklayer_app/services/obra_service.dart';
 import 'package:bricklayer_app/ui/pages/cadastroTarefas_page.dart';
+import 'package:bricklayer_app/ui/pages/notifications_page.dart';
 import 'package:bricklayer_app/ui/pages/relatorio_page.dart';
 import 'package:bricklayer_app/ui/widgets/insumos_modal.dart';
 import 'package:flutter/material.dart';
@@ -258,7 +259,20 @@ class _ObraDetailScreenState extends State<ObraDetailScreen> {
                   },
                   child: Text('Ver Relatório da Obra'),
                 ),
-              )
+              ),
+              Center(
+                child: ElevatedButton(
+                  onPressed: () {
+                    Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) => NotificationsPage()));
+                  },
+                  child: Text('Ver notificações'),
+                  style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.orange[800]),
+                ),
+              ),
             ],
           ),
         ),

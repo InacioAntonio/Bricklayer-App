@@ -1,5 +1,3 @@
-import 'dart:math';
-
 import 'package:bricklayer_app/services/obra_service.dart';
 import 'package:flutter/material.dart';
 import 'package:bricklayer_app/domain/Tarefas.dart';
@@ -7,10 +5,6 @@ import 'package:bricklayer_app/domain/Obras.dart';
 import 'package:bricklayer_app/domain/Insumos.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
-
-import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
-import 'package:provider/provider.dart';
 
 class CadastrarTarefaScreen extends StatefulWidget {
   final Obras obra;
@@ -55,7 +49,7 @@ class _CadastrarTarefaScreenState extends State<CadastrarTarefaScreen> {
   }
 
   void _adicionarInsumo() {
-    if (_insumoSelecionado == null) {
+    if (_insumoSelecionado == null || _quantidadeSelecionada == 0) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Selecione um insumo antes de adicionar.')),
       );
@@ -63,14 +57,23 @@ class _CadastrarTarefaScreenState extends State<CadastrarTarefaScreen> {
     }
 
     setState(() {
-      _insumosAdicionados.add(_insumoSelecionado!);
+      // Cria uma cópia do insumo com a quantidade específica para a tarefa
+      final insumoParaTarefa = Insumos(
+        nome: _insumoSelecionado!.nome,
+        valor: _insumoSelecionado!.valor,
+        quantidade: _quantidadeSelecionada,
+      );
+      _insumosAdicionados.add(insumoParaTarefa);
       _insumoSelecionado = null;
       _quantidadeSelecionada = 1;
     });
   }
 
   void _salvarTarefa() {
-    if (_nomeController.text.isEmpty || _descricaoController.text.isEmpty) {
+    if (_nomeController.text.isEmpty ||
+        _descricaoController.text.isEmpty ||
+        _dataInicioController == null ||
+        _dataFimController == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Preencha todos os campos obrigatórios!')),
       );
@@ -86,13 +89,25 @@ class _CadastrarTarefaScreenState extends State<CadastrarTarefaScreen> {
       );
       return;
     }
+
+    // Cria uma cópia dos insumos para evitar interferência
+    // Copiar profundamente os insumos
+    final insumosTarefa = _insumosAdicionados.map((insumo) {
+      return Insumos(
+        nome: insumo.nome,
+        valor: insumo.valor,
+        quantidade: insumo.quantidade,
+      );
+    }).toList();
+
     if (widget.tarefa == null) {
+      // Criar nova tarefa
       final novaTarefa = Tarefa(
         nome: _nomeController.text,
         descricao: _descricaoController.text,
         dataInicio: _dataInicioController!,
         dataFim: _dataFimController!,
-        insumos: _insumosAdicionados,
+        insumos: insumosTarefa, // Aqui vai a cópia dos insumos
         obra: widget.obra.nome,
         concluido: _concluido,
       );
@@ -101,25 +116,38 @@ class _CadastrarTarefaScreenState extends State<CadastrarTarefaScreen> {
       tarefas.add(novaTarefa);
       widget.obra.tarefas = tarefas;
       realtimeService.updateObra(widget.obra);
+
       ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Tarefa cadastrada com sucesso!')));
+        SnackBar(content: Text('Tarefa cadastrada com sucesso!')),
+      );
       Navigator.of(context).pop(novaTarefa);
     } else {
-      int index = widget.obra.tarefas!.indexOf(widget.tarefa!) == -1
-          ? 0
-          : widget.obra.tarefas!.indexOf(widget.tarefa!);
-      final novaTarefa = Tarefa(
-        nome: _nomeController.text,
-        descricao: _descricaoController.text,
-        dataInicio: _dataInicioController!,
-        dataFim: _dataFimController!,
-        insumos: _insumosAdicionados,
-        obra: widget.obra.nome,
-        concluido: _concluido,
-      );
-      widget.obra.tarefas![index] = novaTarefa;
-      realtimeService.updateObra(widget.obra);
-      Navigator.of(context).pop(novaTarefa);
+      // Editar tarefa existente
+      int index = widget.obra.tarefas!.indexOf(widget.tarefa!);
+
+      if (index != -1) {
+        final novaTarefa = Tarefa(
+          nome: _nomeController.text,
+          descricao: _descricaoController.text,
+          dataInicio: _dataInicioController!,
+          dataFim: _dataFimController!,
+          insumos: insumosTarefa,
+          obra: widget.obra.nome,
+          concluido: _concluido,
+        );
+
+        widget.obra.tarefas![index] = novaTarefa;
+        realtimeService.updateObra(widget.obra);
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Tarefa atualizada com sucesso!')),
+        );
+        Navigator.of(context).pop(novaTarefa);
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Erro: Tarefa não encontrada!')),
+        );
+      }
     }
   }
 

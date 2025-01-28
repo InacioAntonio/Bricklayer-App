@@ -1,15 +1,17 @@
 import 'package:bricklayer_app/domain/Insumos.dart';
 import 'package:bricklayer_app/domain/Obras.dart';
+import 'package:bricklayer_app/domain/Tarefas.dart';
 import 'package:bricklayer_app/services/obra_service.dart';
 import 'package:bricklayer_app/ui/pages/home_page.dart';
 import 'package:bricklayer_app/ui/widgets/insumos_modal.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
 class CadastroObrasScreen extends StatefulWidget {
   Obras? obra;
-  CadastroObrasScreen({this.obra});
+  CadastroObrasScreen({super.key, this.obra});
   @override
   _CadastroObrasScreenState createState() => _CadastroObrasScreenState();
 }
@@ -17,6 +19,7 @@ class CadastroObrasScreen extends StatefulWidget {
 class _CadastroObrasScreenState extends State<CadastroObrasScreen> {
   final _nomeController = TextEditingController();
   final _descricaoController = TextEditingController();
+  late RealtimeService realtimeService;
   final List<Insumos> _insumos = [];
   double _valorTotal = 0.0;
   String _novoInsumoNome = '';
@@ -24,20 +27,50 @@ class _CadastroObrasScreenState extends State<CadastroObrasScreen> {
   int _novoInsumoQuantidade = 0;
   DateTime? _dataInicio;
   DateTime? _dataFim;
-  double _ValorMaoDeObra = 0.0;
-  get realtimeService => Provider.of<RealtimeService>(context, listen: false);
+  final _ValorMaoDeObra = TextEditingController();
   @override
   void initState() {
     super.initState();
     if (widget.obra != null) {
+      // Configurar valores iniciais para os campos
       _nomeController.text = widget.obra!.nome;
       _descricaoController.text = widget.obra!.descricao;
       _dataInicio = widget.obra!.dataInicio;
       _dataFim = widget.obra!.dataFim;
       _insumos.addAll(widget.obra!.insumos);
       _valorTotal = widget.obra!.valorTotal;
-      _ValorMaoDeObra = widget.obra!.valorMaoDeObra;
+      _ValorMaoDeObra.text = (widget.obra!.valorMaoDeObra ?? 0.0).toString();
     }
+    // Adiciona listener ao campo de mão de obra
+    _ValorMaoDeObra.addListener(_calcularValorTotal);
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    realtimeService = Provider.of<RealtimeService>(context);
+  }
+
+  @override
+  void dispose() {
+    _nomeController.dispose();
+    _descricaoController.dispose();
+    _ValorMaoDeObra.clear();
+    // Remove listener para evitar memory leaks
+    _ValorMaoDeObra.removeListener(_calcularValorTotal);
+    _ValorMaoDeObra.dispose();
+    super.dispose();
+  }
+
+  void _calcularValorTotal() {
+    if (!mounted) return;
+    setState(() {
+      _valorTotal = 0.0;
+      for (var insumo in _insumos) {
+        _valorTotal += insumo.valor * insumo.quantidade;
+      }
+      _valorTotal += double.tryParse(_ValorMaoDeObra.text) ?? 0.0;
+    });
   }
 
   void _adicionarInsumo() {
@@ -58,10 +91,12 @@ class _CadastroObrasScreenState extends State<CadastroObrasScreen> {
           quantidade: _novoInsumoQuantidade,
         ),
       );
-      _valorTotal = 0.0;
-      for (var insumo in _insumos) {
-        _valorTotal += insumo.valor * insumo.quantidade;
-      }
+      _calcularValorTotal();
+      // Limpa os campos após adicionar o insumo
+      _novoInsumoNome = '';
+      _novoInsumoValor = 0.0;
+      _novoInsumoQuantidade = 0;
+      // Fecha o modal
     });
     // Limpa os campos após adicionar o insumo
     _novoInsumoNome = '';
@@ -70,7 +105,7 @@ class _CadastroObrasScreenState extends State<CadastroObrasScreen> {
     // Fecha o modal
   }
 
-  void _EditarInsumo(Insumos insumo) {
+  void _editarInsumo(Insumos insumo) {
     print('Editando insumo: $_novoInsumoNome');
     if (_novoInsumoNome.isEmpty ||
         _novoInsumoValor == 0.0 ||
@@ -90,11 +125,8 @@ class _CadastroObrasScreenState extends State<CadastroObrasScreen> {
           quantidade: _novoInsumoQuantidade,
         ),
       );
-      _valorTotal = 0.0;
-      for (var insumo in _insumos) {
-        _valorTotal += insumo.valor * insumo.quantidade;
-      }
     });
+    _calcularValorTotal();
     // Limpa os campos após adicionar o insumo
     _novoInsumoNome = '';
     _novoInsumoValor = 0.0;
@@ -114,7 +146,7 @@ class _CadastroObrasScreenState extends State<CadastroObrasScreen> {
               _novoInsumoQuantidade = quantidade;
             });
             if (insumo != null) {
-              _EditarInsumo(insumo);
+              _editarInsumo(insumo);
             } else {
               _adicionarInsumo();
             }
@@ -153,7 +185,46 @@ class _CadastroObrasScreenState extends State<CadastroObrasScreen> {
     }
   }
 
-  void _cadastrarObra() {
+  Future<void> _atualizarObra() async {
+    try {
+      if (_nomeController.text.isEmpty ||
+          _descricaoController.text.isEmpty ||
+          _dataInicio == null ||
+          _dataFim == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Preencha todos os campos!')),
+        );
+        return;
+      }
+      widget.obra!.nome = _nomeController.text;
+      widget.obra!.descricao = _descricaoController.text;
+      widget.obra!.dataInicio = _dataInicio!;
+      widget.obra!.dataFim = _dataFim!;
+      widget.obra!.insumos = _insumos;
+      widget.obra!.valorTotal = _valorTotal;
+      widget.obra!.valorMaoDeObra =
+          double.tryParse(_ValorMaoDeObra.text) ?? 0.0;
+      realtimeService = Provider.of<RealtimeService>(context, listen: false);
+      await realtimeService.updateObra(widget.obra!);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+            content:
+                Text('Obra "${widget.obra!.nome}" atualizada com sucesso!')),
+      );
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (context) => MyHomePage()),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Erro ao atualizar a obra: $e')),
+      );
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (context) => MyHomePage()),
+      );
+    }
+  }
+
+  Future<void> _cadastrarObra() async {
     if (_nomeController.text.isEmpty ||
         _descricaoController.text.isEmpty ||
         _dataInicio == null ||
@@ -169,6 +240,13 @@ class _CadastroObrasScreenState extends State<CadastroObrasScreen> {
       );
       return;
     }
+    if (_dataInicio!.isAfter(_dataFim!)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+            content: Text('Data de início deve ser antes da data de fim!')),
+      );
+      return;
+    }
     Obras novaObra = Obras(
       nome: _nomeController.text,
       dataInicio: _dataInicio!,
@@ -176,31 +254,27 @@ class _CadastroObrasScreenState extends State<CadastroObrasScreen> {
       descricao: _descricaoController.text,
       insumos: _insumos,
       valorTotal: _valorTotal,
-      valorMaoDeObra: _ValorMaoDeObra,
+      valorMaoDeObra: double.tryParse(_ValorMaoDeObra.text) ?? 0.0,
+      tarefas: List<Tarefa>.empty(growable: true),
     );
+    realtimeService = Provider.of<RealtimeService>(context, listen: false);
     try {
-      if (widget.obra != null) {
-        realtimeService.updateObra(novaObra);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-              content: Text('Obra "${novaObra.nome}" atualizada com sucesso!')),
-        );
-      } else {
-        realtimeService.cadastrarObra(novaObra);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-              content: Text('Obra "${novaObra.nome}" cadastrada com sucesso!')),
-        );
-      }
+      await realtimeService.cadastrarObra(novaObra);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+            content: Text('Obra "${novaObra.nome}" cadastrada com sucesso!')),
+      );
 
       // Limpar os campos após o cadastro
-      setState(() {
-        _nomeController.clear();
-        _descricaoController.clear();
-        _dataInicio = null;
-        _dataFim = null;
-        _insumos.clear();
-      });
+      if (mounted) {
+        setState(() {
+          _nomeController.clear();
+          _descricaoController.clear();
+          _dataInicio = null;
+          _dataFim = null;
+          _insumos.clear();
+        });
+      }
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(builder: (context) => MyHomePage()),
       );
@@ -215,7 +289,7 @@ class _CadastroObrasScreenState extends State<CadastroObrasScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Cadastro de Obras'),
+        title: Text(widget.obra == null ? 'Cadastrar Obra' : 'Editar Obra'),
         backgroundColor: Colors.orange[800],
       ),
       body: Padding(
@@ -241,22 +315,17 @@ class _CadastroObrasScreenState extends State<CadastroObrasScreen> {
               ),
               SizedBox(height: 16),
               TextField(
-                controller:
-                    TextEditingController(text: _ValorMaoDeObra.toString()),
+                controller: _ValorMaoDeObra,
                 decoration: InputDecoration(
                   labelText: 'Valor da Mão de Obra',
                   border: OutlineInputBorder(),
                 ),
-                onChanged: (value) {
-                  setState(() {
-                    _ValorMaoDeObra = double.tryParse(value) ?? 0.0;
-                    _valorTotal = 0.0;
-                    for (var insumo in _insumos) {
-                      _valorTotal += insumo.valor * insumo.quantidade;
-                    }
-                    _valorTotal += _ValorMaoDeObra;
-                  });
-                },
+                keyboardType: TextInputType.number,
+                inputFormatters: <TextInputFormatter>[
+                  FilteringTextInputFormatter.allow(RegExp(
+                      r'^\d*\.?\d{0,2}$')), // Permite até duas casas decimais // Aceita apenas números e ponto decimal
+                ],
+                onChanged: (value) => {_calcularValorTotal()},
               ),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -316,11 +385,7 @@ class _CadastroObrasScreenState extends State<CadastroObrasScreen> {
                       onPressed: () {
                         setState(() {
                           _insumos.remove(insumo);
-                          _valorTotal = 0.0;
-                          for (var insumo in _insumos) {
-                            _valorTotal += insumo.valor * insumo.quantidade;
-                          }
-                          _valorTotal += _ValorMaoDeObra;
+                          _calcularValorTotal();
                         });
                       },
                     ),
@@ -330,7 +395,7 @@ class _CadastroObrasScreenState extends State<CadastroObrasScreen> {
                         color: Colors.blue,
                       ),
                       onPressed: () {
-                        _EditarInsumo(insumo);
+                        _editarInsumo(insumo);
                       },
                     )
                   ]),
@@ -353,10 +418,12 @@ class _CadastroObrasScreenState extends State<CadastroObrasScreen> {
               SizedBox(height: 32),
               Center(
                 child: ElevatedButton(
-                  onPressed: _cadastrarObra,
+                  onPressed:
+                      widget.obra == null ? _cadastrarObra : _atualizarObra,
                   style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.orange[800]),
-                  child: Text('Cadastrar Obra',
+                  child: Text(
+                      widget.obra == null ? 'Cadastrar Obra' : 'Editar Obra',
                       style: TextStyle(color: Colors.white)),
                 ),
               ),

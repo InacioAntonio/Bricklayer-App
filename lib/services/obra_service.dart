@@ -1,5 +1,6 @@
 import 'package:bricklayer_app/domain/Insumos.dart';
 import 'package:bricklayer_app/domain/Obras.dart';
+import 'package:bricklayer_app/domain/Tarefas.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
@@ -15,8 +16,8 @@ class RealtimeService {
     String id = FirebaseAuth.instance.currentUser!.uid;
     await database.collection('users').doc(id).collection('obras').add({
       'nome': obra.nome,
-      'datainicio': obra.dataInicio,
-      'datafim': obra.dataFim,
+      'datainicio': obra.dataInicio..toIso8601String(),
+      'datafim': obra.dataFim..toIso8601String(),
       'Lista_insumos': obra.insumos.map((insumo) {
         return {
           'nome': insumo.nome,
@@ -122,6 +123,24 @@ class RealtimeService {
           }).toList(),
           valorTotal: doc['valorTotal'],
           valorMaoDeObra: doc['valorMaoDeObra'],
+          tarefas: (doc['tarefas'] as List).map((tarefa) {
+                return Tarefa(
+                    nome: tarefa['nome'],
+                    descricao: tarefa['descricao'],
+                    dataInicio: (doc['datainicio'] as Timestamp).toDate(),
+                    dataFim: (doc['datainicio'] as Timestamp).toDate(),
+                    insumos:
+                        (tarefa['Insumos_Ultilizados'] as List).map((insumo) {
+                      return Insumos(
+                        nome: insumo['nome'],
+                        valor: insumo['valor'],
+                        quantidade: insumo['quantidade'],
+                      );
+                    }).toList(),
+                    obra: tarefa['obra'],
+                    concluido: tarefa['concluido']);
+              }).toList() ??
+              List<Tarefa>.empty(),
         );
       }).toList();
     } catch (e) {
