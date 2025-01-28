@@ -1,5 +1,4 @@
 import 'package:bricklayer_app/domain/Insumos.dart';
-import 'package:bricklayer_app/domain/Obras.dart';
 import 'package:intl/intl.dart';
 
 class Tarefa {
@@ -37,7 +36,7 @@ class Tarefa {
       'descricao': descricao,
       'dataInicio': dataInicio.toIso8601String(),
       'dataFim': dataFim.toIso8601String(),
-      'Lista_insumos': insumos.map((insumo) {
+      'Insumos_Ultilizados': insumos.map((insumo) {
         return {
           'nome': insumo.nome,
           'valor': insumo.valor,
@@ -57,7 +56,7 @@ class Tarefa {
       dataInicio: DateTime.parse(map['dataInicio']),
       dataFim: DateTime.parse(map['dataFim']),
       insumos: List<Insumos>.from(
-        map['Lista_insumos'].map((insumo) {
+        map['Insumos_Ultilizados'].map((insumo) {
           return Insumos(
             nome: insumo['nome'],
             valor: insumo['valor'],
