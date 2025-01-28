@@ -18,6 +18,16 @@ class RelatorioGastosObra extends StatelessWidget {
       }
     }
     gastosPorCategoria['Mão de Obra'] = obra.valorMaoDeObra ?? 0;
+
+    final List<Color> coresDasBarras = [
+      Colors.orange[800]!,
+      Colors.blue[800]!,
+      Colors.green[800]!,
+      Colors.red[800]!,
+      Colors.purple[800]!,
+      Colors.teal[800]!,
+    ];
+
     return Scaffold(
       appBar: AppBar(
         title: Text('Relatório de Gastos da Obra'),
@@ -48,7 +58,10 @@ class RelatorioGastosObra extends StatelessWidget {
                               padding: const EdgeInsets.only(top: 8.0),
                               child: Text(
                                 categorias[value.toInt()],
-                                style: TextStyle(fontSize: 10),
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  color: Colors.black,
+                                ),
                               ),
                             );
                           }
@@ -57,7 +70,24 @@ class RelatorioGastosObra extends StatelessWidget {
                       ),
                     ),
                     leftTitles: AxisTitles(
-                      sideTitles: SideTitles(showTitles: true),
+                      sideTitles: SideTitles(
+                        showTitles: true,
+                        getTitlesWidget: (value, meta) {
+                          return Text(
+                            'R\$ ${value.toInt()}',
+                            style: TextStyle(
+                              fontSize: 10,
+                              color: Colors.black,
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                    rightTitles: AxisTitles(
+                      sideTitles: SideTitles(showTitles: false),
+                    ),
+                    topTitles: AxisTitles(
+                      sideTitles: SideTitles(showTitles: false),
                     ),
                   ),
                   borderData: FlBorderData(show: false),
@@ -73,13 +103,32 @@ class RelatorioGastosObra extends StatelessWidget {
                       barRods: [
                         BarChartRodData(
                           toY: valor,
-                          color: Colors.orange[800],
+                          color: coresDasBarras[index % coresDasBarras.length],
                           width: 16,
                           borderRadius: BorderRadius.circular(4),
                         ),
                       ],
+                      showingTooltipIndicators: [0], // Mostrar tooltip
                     );
                   }).toList(),
+                  barTouchData: BarTouchData(
+                    enabled: true,
+                    touchTooltipData: BarTouchTooltipData(
+                      tooltipBgColor: Colors.black87,
+                      getTooltipItem: (group, groupIndex, rod, rodIndex) {
+                        final categoria =
+                            gastosPorCategoria.keys.toList()[group.x.toInt()];
+                        final valor = rod.toY;
+                        return BarTooltipItem(
+                          '$categoria\nR\$ ${valor.toStringAsFixed(2)}',
+                          TextStyle(
+                            color: Colors.white,
+                            fontSize: 12,
+                          ),
+                        );
+                      },
+                    ),
+                  ),
                 ),
               ),
             ),

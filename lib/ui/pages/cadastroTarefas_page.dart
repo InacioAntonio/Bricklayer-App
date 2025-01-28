@@ -38,7 +38,6 @@ class _CadastrarTarefaScreenState extends State<CadastrarTarefaScreen> {
     _dataFimController = widget.tarefa?.dataFim ?? widget.obra.dataFim;
     _concluido = widget.tarefa?.concluido ?? false;
     _insumosAdicionados = widget.tarefa?.insumos ?? [];
-    _insumoSelecionado = null;
   }
 
   @override
@@ -57,11 +56,11 @@ class _CadastrarTarefaScreenState extends State<CadastrarTarefaScreen> {
     }
 
     setState(() {
-      // Cria uma cópia do insumo com a quantidade específica para a tarefa
+      // Cria uma cópia independente do insumo com a quantidade específica para a tarefa
       final insumoParaTarefa = Insumos(
         nome: _insumoSelecionado!.nome,
         valor: _insumoSelecionado!.valor,
-        quantidade: _quantidadeSelecionada,
+        quantidade: _quantidadeSelecionada, // Usa a quantidade selecionada
       );
       _insumosAdicionados.add(insumoParaTarefa);
       _insumoSelecionado = null;
@@ -90,16 +89,6 @@ class _CadastrarTarefaScreenState extends State<CadastrarTarefaScreen> {
       return;
     }
 
-    // Cria uma cópia dos insumos para evitar interferência
-    // Copiar profundamente os insumos
-    final insumosTarefa = _insumosAdicionados.map((insumo) {
-      return Insumos(
-        nome: insumo.nome,
-        valor: insumo.valor,
-        quantidade: insumo.quantidade,
-      );
-    }).toList();
-
     if (widget.tarefa == null) {
       // Criar nova tarefa
       final novaTarefa = Tarefa(
@@ -107,7 +96,7 @@ class _CadastrarTarefaScreenState extends State<CadastrarTarefaScreen> {
         descricao: _descricaoController.text,
         dataInicio: _dataInicioController!,
         dataFim: _dataFimController!,
-        insumos: insumosTarefa, // Aqui vai a cópia dos insumos
+        insumos: List.from(_insumosAdicionados), // Cria uma cópia dos insumos
         obra: widget.obra.nome,
         concluido: _concluido,
       );
@@ -131,7 +120,7 @@ class _CadastrarTarefaScreenState extends State<CadastrarTarefaScreen> {
           descricao: _descricaoController.text,
           dataInicio: _dataInicioController!,
           dataFim: _dataFimController!,
-          insumos: insumosTarefa,
+          insumos: List.from(_insumosAdicionados), // Cria uma cópia dos insumos
           obra: widget.obra.nome,
           concluido: _concluido,
         );
@@ -287,7 +276,6 @@ class _CadastrarTarefaScreenState extends State<CadastrarTarefaScreen> {
                     onChanged: (value) {
                       setState(() {
                         _quantidadeSelecionada = value!;
-                        _insumoSelecionado!.quantidade = _quantidadeSelecionada;
                       });
                     },
                   ),
